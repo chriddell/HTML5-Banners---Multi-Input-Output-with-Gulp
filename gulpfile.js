@@ -10,6 +10,7 @@ const gulp        	= require('gulp'),
 			uglify 				= require('gulp-uglify'),
 			pump					= require('pump'),
 			autoprefixer	= require('gulp-autoprefixer'),
+			replace 			= require('gulp-replace'),
 			args					= require('yargs').argv;
 
 // Options
@@ -30,7 +31,7 @@ gulp.task('serve', function(){
 
 	gulp.watch(baseDir + '/css/*.scss', ['sass']);
 	gulp.watch(baseDir + '/index.handlebars', ['handlebars']);
-	gulp.watch(baseDir + '/js/app.js', ['compress']);
+	gulp.watch(baseDir + '/js/app.js').on('change', browserSync.reload);
 	gulp.watch(baseDir + '/index.html').on('change', browserSync.reload);
 });
 
@@ -90,10 +91,10 @@ gulp.task('clean', function(){
 	);
 });
 
-// Build
+// Build for dist
 
 const data 		= require('./data.json'),
-			sizes 	= ['300x250', '300x600', '728x90'];
+			sizes 	= ['test'];
 
 gulp.task('compile', function(){
 
@@ -109,6 +110,8 @@ gulp.task('compile', function(){
 			gulp.src(inputDir + '/index.handlebars')
 				.pipe(handlebars(ad))
 				.pipe(rename('index.html'))
+				.pipe(replace('js/app.js', 'app.min.js'))
+				.pipe(replace('css/style.css', 'style.min.css'))
 				.pipe(gulp.dest(outputDir));
 
 			// compress media
@@ -117,10 +120,15 @@ gulp.task('compile', function(){
 			])
 			.pipe(gulp.dest(outputDir + '/media'));
 
+			let sassOpts = {
+				outputStyle: 'compressed'
+			};
+
 			// scss
 			gulp.src(inputDir + '/css/*.scss')
-				.pipe(sass().on('error', sass.logError))
+				.pipe(sass(sassOpts).on('error', sass.logError))
 				.pipe(autoprefixer(autoprefixerOpts))
+				.pipe(rename('style.min.css'))
 				.pipe(gulp.dest(outputDir));
 
 			// js
